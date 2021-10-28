@@ -96,6 +96,9 @@ bg_rates <- summBg(log_data, setup=setup, id.name='Reactor', time.name='Day', vo
                    inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                    descrip.name='Description', show.obs=T, show.rates=T)
 
+# for plotting raw data
+raw_data <- merge(log_data, setup %>% select(c(Reactor, Description)), by="Reactor")
+
 # generate plots
 daily_prod_plot <- ggplot(bg_rates, aes(x=Day, y=rrvCH4, group=Reactor, color=Description)) +
   geom_line(size=1) +
@@ -118,9 +121,16 @@ mean_cum_prod_plot <- ggplot(bg_rates, aes(x=Day, y=vol, group=Description, colo
   ylab(expression(Cumulative~methane~production~(Nml~CH[4]~(g~VS)^-1))) +
   theme(legend.position="bottom")
 
+raw_plot <- ggplot(raw_data, aes(x=Day, y=vol, group=Reactor, color=Description)) + 
+  geom_line(size=1) +
+  ylab('Unadjusted methane production (Nml CH4)') +
+  theme_bw() +
+  theme(legend.position='bottom')
+
 ggsave(paste0(outdir, '/Daily rates.pdf'), daily_prod_plot, width=20, height=16, units='cm')
 ggsave(paste0(outdir, '/Cumulative production.pdf'), cum_prod_plot, width=20, height=16, units='cm')
 ggsave(paste0(outdir, '/Cumulative production (means).pdf'), mean_cum_prod_plot, width=20, height=16, units='cm')
+ggsave(paste0(outdir, '/Unadjusted production.pdf'), daily_prod_plot, width=20, height=16, units='cm')
 
 # generate tables
 write.table(bg_means, paste0(outdir, '/BMP means (1% 3d).tsv'), sep='\t', row.names=F, quote=F)
