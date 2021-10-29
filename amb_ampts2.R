@@ -42,16 +42,11 @@ for(file in l) {
     #log <- log[,c(1,17:ncol(log))]
     log <- log[,c(1:16)]
     
-    # calculate start date
-    log_date <- str_split(f, '_', simpl=T)[1,2]
-    start_date <- ymd(log_date) - days(max(log$Day))
-    
-    # let's say these dates represent 00:00 every day
-    log$date.time <- paste0(ymd(start_date) + days(log$Day), ' 00:00:00')
-    log$date.time <- strptime(log$date.time, format='%Y-%m-%d %H:%M:%S')
+    # frequency of data collection
+    freq <- names(log)[1]
     
     # convert to long format
-    log |> pivot_longer(-c(Day, date.time), names_pattern='^([A-Z][0-9]*)+ .*$', 
+    log |> pivot_longer(cols=last_col(offset=14):last_col(), names_pattern='^([A-Z][0-9]*)+ .*$', 
                         names_to='Reactor', values_to='vol') -> log
 
     log_data <- rbind(log_data, log)
@@ -84,44 +79,44 @@ if(length(inoc.desc) > 1) {
 log_data <- as.data.frame(log_data)
 
 # summary statistics
-bg_means <- summBg(log_data, setup=setup, id.name='Reactor', time.name='Day', vol.name='vol', when='1p3d', 
+bg_means <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='1p3d', 
                    inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                    descrip.name='Description')
-bg_means_end <- summBg(log_data, setup=setup, id.name='Reactor', time.name='Day', vol.name='vol', when='end', 
+bg_means_end <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='end', 
                        inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                        descrip.name='Description')
 
 # rates for plotting
-bg_rates <- summBg(log_data, setup=setup, id.name='Reactor', time.name='Day', vol.name='vol', when='1p3d', 
+bg_rates <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='1p3d', 
                    inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                    descrip.name='Description', show.obs=T, show.rates=T)
 
 # for plotting raw data
-raw_data <- merge(log_data, setup %>% select(c(Reactor, Description)), by="Reactor")
+raw_data <- merge(log_data, setup |> select(c(Reactor, Description)), by="Reactor")
 
 # generate plots
-daily_prod_plot <- ggplot(bg_rates, aes(x=Day, y=rrvCH4, group=Reactor, color=Description)) +
+daily_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='rrvCH4', group='Reactor', color='Description')) +
   geom_line(size=1) +
   theme_bw() +
   ylab("Daily methane production compared to cumulative methane production (%)") +
-  scale_x_continuous(name = "Time (days)", breaks = seq(0, max(bg_rates$Day), by=2)) +
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, max(bg_rates[1]), by=2)) +
   scale_y_sqrt(breaks = c(0, 1, 10, 25, 50, 75, 100, 125)) +
   geom_hline(yintercept=1, size=1) +
   theme(legend.position="bottom")
 
-cum_prod_plot <- ggplot(bg_rates, aes(x=Day, y=vol, group=Reactor, color=Description)) + 
+cum_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='vol', group='Reactor', color='Description')) + 
   geom_line(size=1) +
   theme_bw() +
   ylab(expression(Cumulative~methane~production~(Nml~CH[4]~(g~VS)^-1))) +
   theme(legend.position="bottom")
 
-mean_cum_prod_plot <- ggplot(bg_rates, aes(x=Day, y=vol, group=Description, color=Description)) + 
+mean_cum_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='vol', group='Description', color='Description')) + 
   geom_smooth() +
   theme_bw() +
   ylab(expression(Cumulative~methane~production~(Nml~CH[4]~(g~VS)^-1))) +
   theme(legend.position="bottom")
 
-raw_plot <- ggplot(raw_data, aes(x=Day, y=vol, group=Reactor, color=Description)) + 
+raw_plot <- ggplot(raw_data, aes_string(x=freq, y='vol', group='Reactor', color='Description')) + 
   geom_line(size=1) +
   ylab('Unadjusted methane production (Nml CH4)') +
   theme_bw() +
