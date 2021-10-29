@@ -53,6 +53,8 @@ for(file in l) {
   }
 }
 
+if(freq=='Day') when <- '1p3d' else when <- '1p72d'
+
 setDT(log_data)
 
 # measured volumes are 100% CH4
@@ -79,7 +81,7 @@ if(length(inoc.desc) > 1) {
 log_data <- as.data.frame(log_data)
 
 # summary statistics
-bg_means <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='1p3d', 
+bg_means <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when=when, 
                    inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                    descrip.name='Description')
 bg_means_end <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='end', 
@@ -87,7 +89,7 @@ bg_means_end <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq,
                        descrip.name='Description')
 
 # rates for plotting
-bg_rates <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when='1p3d', 
+bg_rates <- summBg(log_data, setup=setup, id.name='Reactor', time.name=freq, vol.name='vol', when=when, 
                    inoc.name=inoc.desc, inoc.m.name='Inoculum mass', norm.name='subst.vs.mass', #norm.se.name='vs.stderr',
                    descrip.name='Description', show.obs=T, show.rates=T)
 
@@ -98,8 +100,8 @@ raw_data <- merge(log_data, setup |> select(c(Reactor, Description)), by="Reacto
 daily_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='rrvCH4', group='Reactor', color='Description')) +
   geom_line(size=1) +
   theme_bw() +
-  ylab("Daily methane production compared to cumulative methane production (%)") +
-  scale_x_continuous(name = "Time (days)", breaks = seq(0, max(bg_rates[1]), by=2)) +
+  ylab("Methane production compared to cumulative methane production (%)") +
+  scale_x_continuous(name = paste0("Time (", tolower(freq), "s)"), breaks = seq(0, max(bg_rates[1]), by=2)) +
   scale_y_sqrt(breaks = c(0, 1, 10, 25, 50, 75, 100, 125)) +
   geom_hline(yintercept=1, size=1) +
   theme(legend.position="bottom")
@@ -108,12 +110,14 @@ cum_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='vol', group='Reactor', c
   geom_line(size=1) +
   theme_bw() +
   ylab(expression(Cumulative~methane~production~(Nml~CH[4]~(g~VS)^-1))) +
+  xlab(freq) +
   theme(legend.position="bottom")
 
 mean_cum_prod_plot <- ggplot(bg_rates, aes_string(x=freq, y='vol', group='Description', color='Description')) + 
   geom_smooth() +
   theme_bw() +
   ylab(expression(Cumulative~methane~production~(Nml~CH[4]~(g~VS)^-1))) +
+  xlab(freq) +
   theme(legend.position="bottom")
 
 raw_plot <- ggplot(raw_data, aes_string(x=freq, y='vol', group='Reactor', color='Description')) + 
