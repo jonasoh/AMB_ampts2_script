@@ -9,7 +9,7 @@ if (!require('pacman')) {
   install.packages('pacman')
   library(pacman)
 }
-p_load(data.table, tidyr, biogas, lubridate, stringr, zoo, ggplot2, readxl)
+p_load(data.table, dplyr, tidyr, biogas, lubridate, stringr, zoo, ggplot2, readxl)
 
 # ask the user for location of log file
 # there is no support for directory picker under non-windows platforms
@@ -130,7 +130,7 @@ raw_plot <- ggplot(raw_data, aes(x=Day, y=vol, group=Reactor, color=Description)
 ggsave(paste0(outdir, '/Daily rates.pdf'), daily_prod_plot, width=20, height=16, units='cm')
 ggsave(paste0(outdir, '/Cumulative production.pdf'), cum_prod_plot, width=20, height=16, units='cm')
 ggsave(paste0(outdir, '/Cumulative production (means).pdf'), mean_cum_prod_plot, width=20, height=16, units='cm')
-ggsave(paste0(outdir, '/Unadjusted production.pdf'), daily_prod_plot, width=20, height=16, units='cm')
+ggsave(paste0(outdir, '/Unadjusted production.pdf'), raw_plot, width=20, height=16, units='cm')
 
 # generate tables
 write.table(bg_means, paste0(outdir, '/BMP means (1% 3d).tsv'), sep='\t', row.names=F, quote=F)
